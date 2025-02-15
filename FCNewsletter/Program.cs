@@ -13,19 +13,32 @@ class Program
     private static Timer timer;
     private static int seconds = 30;
     private static DateTime dateUser;
-    private static IWebDriver driver = new ChromeDriver();
+    private static IWebDriver driver;
+    private static ChromeOptions chromeOptions = new ChromeOptions();
 
     static async Task Main(string[] args)
     {
         Console.WriteLine($"            FC Newsletter Codes Retriever ");
-        Console.WriteLine($"___________________________");
+        Console.WriteLine($"===============================================================");
+        Console.WriteLine($"Date to search {dateString}");
+        Console.WriteLine($"Period {seconds} seconds");
+
+        Console.WriteLine($"_______________________________________________________________");
 
         dateUser = DateTime.ParseExact(dateString, "dd/MM/yyyy", null);
+
+        chromeOptions.AddArgument("log-level=3");
+
+        var service = ChromeDriverService.CreateDefaultService();
+        service.SuppressInitialDiagnosticInformation = true;
+        service.HideCommandPromptWindow = true;
+
+        var driver = new ChromeDriver(service, chromeOptions);
 
         driver.Navigate().GoToUrl(CodeUrl);
         driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(1);
 
-        timer = new Timer(async _ => await CheckNewPosts(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(seconds));
+        timer = new Timer(async _ => await CheckNewPosts(), null, TimeSpan.Zero, TimeSpan.FromSeconds(seconds));
 
         Console.WriteLine($"Checking newsletter each {seconds} seconds");
         Console.ReadLine();
@@ -61,11 +74,15 @@ class Program
                         OpenAndFillCode(code);
                     }
                 }
+                else
+                {
+                    Console.WriteLine($"No today newsletter found. {DateTime.Now}");
+                }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al consultar el feed: {ex.Message}");
+            Console.WriteLine($"Error getting feed: {ex.Message}");
         }
     }
 
