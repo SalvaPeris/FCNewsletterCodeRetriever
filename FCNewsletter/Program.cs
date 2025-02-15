@@ -6,13 +6,14 @@ using System.Xml.Linq;
 
 class Program
 {
-    private static readonly string dateString = "10/02/2025";
+    private static readonly string dateString = "17/02/2025";
     private static readonly string FeedUrl = "https://newsletter.forocoches.com/feed";
     private static readonly string CodeUrl = "https://www.forocoches.com/codigo";
     private static readonly HttpClient client = new HttpClient();
     private static Timer timer;
     private static int seconds = 60;
     private static DateTime dateUser;
+    private static IWebDriver driver = new ChromeDriver();
 
     static async Task Main(string[] args)
     {
@@ -21,7 +22,10 @@ class Program
 
         dateUser = DateTime.ParseExact(dateString, "dd/MM/yyyy", null);
 
-        timer = new Timer(async _ => await CheckNewPosts(), null, TimeSpan.Zero, TimeSpan.FromSeconds(seconds));
+        driver.Navigate().GoToUrl(CodeUrl);
+        driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(1);
+
+        timer = new Timer(async _ => await CheckNewPosts(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(seconds));
 
         Console.WriteLine($"Checking newsletter each {seconds} seconds");
         Console.ReadLine();
@@ -50,7 +54,12 @@ class Program
                     var codesList = ExtractFormattedStrings(content);
 
                     foreach(var code in codesList)
-                        FillCode(code);
+                    {
+                        if(code == codesList.FirstOrDefault())
+                            FillCode(code);
+
+                        OpenAndFillCode(code);
+                    }
                 }
             }
         }
@@ -87,17 +96,40 @@ class Program
 
     static void FillCode(string code)
     {
-        IWebDriver driver = new ChromeDriver();
+        try
+        {
+            IWebElement inputField = driver.FindElement(By.Name("codigo"));
+            inputField.SendKeys(code);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+        finally
+        {
+        }
+    }
+
+    static void OpenAndFillCode(string code)
+    {
 
         try
         {
+            ((IJavaScriptExecutor)driver).ExecuteScript("window.open('');");
+
+            var windowHandles = driver.WindowHandles;
+
+            driver.SwitchTo().Window(windowHandles[windowHandles.Count - 1]);
+
             driver.Navigate().GoToUrl(CodeUrl);
 
-            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(1);
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
             IWebElement inputField = driver.FindElement(By.Name("codigo"));
 
             inputField.SendKeys(code);
+
+            driver.SwitchTo().Window(windowHandles[0]);
         }
         catch (Exception ex)
         {
