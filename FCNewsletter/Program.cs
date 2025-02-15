@@ -11,7 +11,7 @@ class Program
     private static readonly string CodeUrl = "https://www.forocoches.com/codigo";
     private static readonly HttpClient client = new HttpClient();
     private static Timer timer;
-    private static int seconds = 30;
+    private static int seconds = 10;
     private static DateTime dateUser;
     private static IWebDriver driver;
     private static ChromeOptions chromeOptions = new ChromeOptions();
@@ -22,8 +22,8 @@ class Program
         Console.WriteLine($"===============================================================");
         Console.WriteLine($"Date to search {dateString}");
         Console.WriteLine($"Period {seconds} seconds");
-
-        Console.WriteLine($"_______________________________________________________________");
+        Console.WriteLine($"===============================================================");
+        Console.WriteLine("\n");
 
         dateUser = DateTime.ParseExact(dateString, "dd/MM/yyyy", null);
 
@@ -66,9 +66,10 @@ class Program
                     var content = latestPost.Element(ns + "encoded")?.Value;
                     var codesList = ExtractFormattedStrings(content);
 
-                    foreach(var code in codesList)
+                    foreach (var code in codesList)
                     {
-                        if(code == codesList.FirstOrDefault())
+                        Console.Beep(800, 300);
+                        if (code == codesList.FirstOrDefault())
                             FillCode(code);
 
                         OpenAndFillCode(code);
