@@ -11,7 +11,7 @@ class Program
     private static readonly string CodeUrl = "https://www.forocoches.com/codigo";
     private static readonly HttpClient client = new HttpClient();
     private static Timer timer;
-    private static int seconds = 60;
+    private static int seconds = 30;
     private static DateTime dateUser;
     private static IWebDriver driver = new ChromeDriver();
 
