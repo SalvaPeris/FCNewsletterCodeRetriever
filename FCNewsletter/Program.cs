@@ -16,7 +16,7 @@ class Program
 
     static async Task Main(string[] args)
     {
-        Console.WriteLine($"            FC Codes");
+        Console.WriteLine($"            FC Newsletter Codes Retriever ");
         Console.WriteLine($"___________________________");
 
         dateUser = DateTime.ParseExact(dateString, "dd/MM/yyyy", null);
