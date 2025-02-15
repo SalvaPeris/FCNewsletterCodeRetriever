@@ -33,16 +33,17 @@ class Program
         service.SuppressInitialDiagnosticInformation = true;
         service.HideCommandPromptWindow = true;
 
-        var driver = new ChromeDriver(service, chromeOptions);
+        driver = new ChromeDriver(service, chromeOptions);
 
         driver.Navigate().GoToUrl(CodeUrl);
-        driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(1);
+        driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
         timer = new Timer(async _ => await CheckNewPosts(), null, TimeSpan.Zero, TimeSpan.FromSeconds(seconds));
 
         Console.WriteLine($"Checking newsletter each {seconds} seconds");
         Console.ReadLine();
     }
+
 
     private static async Task CheckNewPosts()
     {
@@ -73,7 +74,12 @@ class Program
                             FillCode(code);
 
                         OpenAndFillCode(code);
+                        Console.WriteLine("Codi: \n");
+                        Console.WriteLine($"{code}");
+                        Console.WriteLine("------------------------");
                     }
+
+                    timer?.Change(Timeout.Infinite, Timeout.Infinite);
                 }
                 else
                 {
@@ -87,9 +93,10 @@ class Program
         }
     }
 
+
     static string[] ExtractFormattedStrings(string content)
     {
-        string paragraphPattern = @"<p>(.*?)</p>";
+        string paragraphPattern = @"<p>&#128064;?\s*([^<]+)</p>";
         List<string> formattedStrings = new List<string>();
 
         MatchCollection paragraphMatches = Regex.Matches(content, paragraphPattern, RegexOptions.Singleline);
@@ -98,19 +105,21 @@ class Program
         {
             string paragraphContent = paragraphMatch.Groups[1].Value;
 
-            string pattern = @"&#128064;?\s*([A-Za-z0-9]+(?:[^A-Za-z0-9\s]+[A-Za-z0-9]+)*)";
-            MatchCollection matches = Regex.Matches(paragraphContent, pattern);
+            string codePattern = @"([A-Za-z0-9])([^A-Za-z0-9]+[A-Za-z0-9]){8}";
+            MatchCollection codeMatches = Regex.Matches(paragraphContent, codePattern);
 
-            foreach (Match match in matches)
+            foreach (Match codeMatch in codeMatches)
             {
-                string rawString = match.Groups[1].Value;
-                string formatted = Regex.Replace(rawString, @"[^A-Za-z0-9]", "");
-                formattedStrings.Add(formatted);
+                string code = codeMatch.Value;
+                string cleanedCode = Regex.Replace(code, @"[^A-Za-z0-9]", "");
+                if (cleanedCode.Length == 9)
+                    formattedStrings.Add(cleanedCode);
             }
         }
 
         return formattedStrings.ToArray();
     }
+
 
     static void FillCode(string code)
     {
@@ -127,6 +136,7 @@ class Program
         {
         }
     }
+
 
     static void OpenAndFillCode(string code)
     {
