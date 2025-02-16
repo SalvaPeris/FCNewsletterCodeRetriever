@@ -3,6 +3,7 @@ using OpenQA.Selenium;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using System.Media;
 
 class Program
 {
@@ -69,12 +70,17 @@ class Program
 
                     foreach (var code in codesList)
                     {
-                        Console.Beep(800, 300);
+                        Console.Beep(3000, 200);
+                        Console.Beep(3000, 200);
+                        Console.Beep(3000, 200);
+                        Console.Beep(3000, 200);
+                        Console.Beep(3000, 200);
+
                         if (code == codesList.FirstOrDefault())
                             FillCode(code);
 
                         OpenAndFillCode(code);
-                        Console.WriteLine("Codi: \n");
+                        Console.WriteLine("Code: \n");
                         Console.WriteLine($"{code}");
                         Console.WriteLine("------------------------");
                     }
