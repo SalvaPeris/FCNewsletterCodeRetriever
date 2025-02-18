@@ -4,6 +4,10 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Media;
+using System;
+using HtmlAgilityPack;
+using System.Net.Http;
+using System.Web;
 
 class Program
 {
@@ -12,7 +16,7 @@ class Program
     private static readonly string CodeUrl = "https://www.forocoches.com/codigo";
     private static readonly HttpClient client = new HttpClient();
     private static Timer timer;
-    private static int seconds = 10;
+    private static int seconds = 600000;
     private static DateTime dateUser;
     private static IWebDriver driver;
     private static ChromeOptions chromeOptions = new ChromeOptions();
@@ -67,7 +71,7 @@ class Program
                     XNamespace ns = "http://purl.org/rss/1.0/modules/content/";
                     var content = latestPost.Element(ns + "encoded")?.Value;
                     var codesList = ExtractFormattedStrings(content);
-
+                    
                     foreach (var code in codesList)
                     {
                         Console.Beep(3000, 200);
@@ -85,6 +89,13 @@ class Program
                         Console.WriteLine("------------------------");
                     }
 
+                    var invisInfo = ExtractParagraphAfterTitle(response);
+
+                    Console.WriteLine($"===============================================================");
+                    Console.WriteLine($"LAS INVIS INFORMATION");
+                    Console.WriteLine($"{invisInfo}");
+                    Console.WriteLine($"===============================================================");
+
                     timer?.Change(Timeout.Infinite, Timeout.Infinite);
                 }
                 else
@@ -99,6 +110,27 @@ class Program
         }
     }
 
+    static string ExtractParagraphAfterTitle(string html)
+    {
+        HtmlDocument doc = new HtmlDocument();
+        doc.LoadHtml(html);
+
+        var titleNode = doc.DocumentNode.SelectSingleNode("//h3[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'invis')]");
+
+        if (titleNode != null)
+        {
+            var nextParagraphNode = titleNode.SelectSingleNode("following-sibling::p");
+            if (nextParagraphNode != null)
+            {
+                Console.WriteLine("Contenido del <p> después del título:");
+                return HttpUtility.HtmlDecode(nextParagraphNode.InnerText);
+            }
+            else
+                return "No paragraph after title.";
+        }
+        else
+            return "No title 'Invis'.";
+    }
 
     static string[] ExtractFormattedStrings(string content)
     {
@@ -110,22 +142,25 @@ class Program
         foreach (Match paragraphMatch in paragraphMatches)
         {
             string paragraphContent = paragraphMatch.Groups[1].Value;
+            string pattern = @"(?<=\s)y(?=\s)";
+            MatchCollection matches = Regex.Matches(paragraphContent, pattern);
 
-            string codePattern = @"([A-Za-z0-9])([^A-Za-z0-9]+[A-Za-z0-9]){8}";
+            if (matches.Count > 0)
+                paragraphContent = Regex.Replace(paragraphContent, pattern,"!!!!!!");
+
+            string codePattern = @"([A-Za-z0-9])([^A-Za-z0-9]+[A-Za-z0-9]){9}";
             MatchCollection codeMatches = Regex.Matches(paragraphContent, codePattern);
 
             foreach (Match codeMatch in codeMatches)
             {
                 string code = codeMatch.Value;
                 string cleanedCode = Regex.Replace(code, @"[^A-Za-z0-9]", "");
-                if (cleanedCode.Length == 9)
-                    formattedStrings.Add(cleanedCode);
+                formattedStrings.Add(cleanedCode);
             }
         }
 
         return formattedStrings.ToArray();
     }
-
 
     static void FillCode(string code)
     {
